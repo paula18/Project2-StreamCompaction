@@ -65,7 +65,7 @@ void naiveParallelScan(float *d_input, float *d_output, int N)
 	dim3 numberOfBlocks(gridSize);
 	dim3 threadsPerBlock(blockSize);
 	
-	for(int offset = 1; offset <= LOG2(N) + 1; offset++)
+	for(int offset = 1; offset <= LOG2(N) + 1; ++offset)
 	{
 		int d_offset = pow(2.0f, offset - 1);
 		inclusivePrefixSum<<<numberOfBlocks,threadsPerBlock>>>(d_input, d_output, N, d_offset);
@@ -102,7 +102,7 @@ __global__ void singleBlockPrefixSum(float * d_input,float * d_output, int N, in
 
 void singleBlockScan(float *d_input, float *d_output, int N)
 {
-	for(int offset = 1; offset < LOG2(N) + 1; offset++)
+	for(int offset = 1; offset <= LOG2(N); ++offset)
 	{
 		int d_offset = pow(2.0f, offset - 1);
 		singleBlockPrefixSum<<<1, N + 1, N * sizeof(float)>>>(d_input, d_output, N, d_offset);
@@ -166,13 +166,13 @@ void parallelScan(float *input, float *output, int N)
 
 	cudaMemcpy(d_input, input, N * sizeof(float), cudaMemcpyDeviceToDevice);
 
-	for(int offset = 1; offset < LOG2(N) + 1; offset++)
+	for(int offset = 1; offset <= LOG2(N); ++offset)
 	{
 		int d_offset = pow(2.0f, offset - 1);
 		generalPrefixSum<<<numberOfBlocks, threadsPerBlock, N * sizeof(float)>>>(d_input, inter_sum, N, d_offset);
 	}
 
-	for(int offset = 1; offset < LOG2(numberOfBlocks) + 1; offset++)
+	for(int offset = 1; offset <= LOG2(numberOfBlocks); ++offset)
 	{
 		int d_offset = (int)pow(2.0f, offset - 1);
 		inclusivePrefixSum<<<ceil((float)numberOfBlocks/(float)threadsPerBlock), threadsPerBlock, numberOfBlocks * sizeof(float)>>>(inter_sum, d_temp, numberOfBlocks, d_offset);
